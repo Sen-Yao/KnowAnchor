@@ -30,6 +30,9 @@ class Card:
         self.true_show_up = 0  # 猜测出来的"真实出现时间"，用于计算损失函数
 
     def show_front(self):
+        """
+        Show the front side of the card, and allow user to save
+        """
         print('\n\n\n\n')
         print(self.front)
         self.time = time.time()
@@ -40,23 +43,22 @@ class Card:
         print('\n\n\n\n\n\n')
 
     def show_back(self):
-        print('\n\n\n\n\n\n')
-        print(self.front, '\n')
-        print(self.back)
-
-        # try:
+        """
+        Show the back side of the card, and record user's respond
+        """
+        print('\n\n\n\n\n\n', self.front, '\n', self.back)
         self.react = int(input('请选择难易程度:\n1:不会, 2: 困难, 3: 记得, 4: 熟练\n'))
-        '''except ValueError:
-            print('输入不正确，请重新输入！')
-            self.react = int(input('请选择难易程度:\n1:不会, 2: 困难, 3: 记得, 4: 熟练\n'))'''
         self.history.append([self.time, self.react, 0])  # 补个零
         if len(self.history) > Length_of_memory - 1:
             self.history.pop(0)  # 防止过长
         self.calculate_expect_show_up()
-        print('此卡片将在', self.expect_show_up - time.time(), '后出现。\n\n\n')
+        print('此卡片将在', int(self.expect_show_up - time.time()), '后出现。\n\n\n')
         self.history[-1].append(self.expect_show_up - time.time())  # 记录的是相对时间
 
     def calculate_expect_show_up(self):
+        """
+        Calculate the expect_show_up time
+        """
         # self.expect_show_up = time.time() + self.react * 60 - self.time * 6  # 默认算法
         self.true_show_up = self.history[-2][2] + (self.react - 2.5) ** 3 / self.time
         self.expect_show_up = net(self.history)  # 深度学习算法
@@ -66,6 +68,8 @@ class Card:
         sgd([w1, b1, w2, b2], lr, Batch_size)
         with torch.no_grad():
             print('损失为', int(loss))
+        if loss > 100:
+            self.expect_show_up = self.true_show_up
         save_params([w1, b1, w2, w2])
 
     def edit(self):
@@ -117,11 +121,8 @@ def save_card(card_list):
 
 
 def save_params(params):
-    f = open('params.txt', 'w', encoding='utf-8')
     for param in params:
-        f.write(param)
-        f.write('\n')
-    f.close()
+        torch.save(param, 'my_tensor.pt')
 
 
 def relu(x):
